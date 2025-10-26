@@ -113,21 +113,25 @@ function importFromJsonFile(event) {
   fileReader.readAsText(event.target.files[0]);
 }
 
-// Simulated Server Sync (using JSONPlaceholder)
+// Fetch quotes from "server" (simulation)
+async function fetchQuotesFromServer() {
+  const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=3");
+  const data = await response.json();
+
+  // Convert server data into quote format
+  return data.map(item => ({
+    text: item.title,
+    category: "Server"
+  }));
+}
+
+// Sync quotes with server
 async function syncWithServer() {
   syncStatus.textContent = "Syncing with server...";
   syncStatus.style.color = "orange";
 
   try {
-    // Fetch “server” data (simulation)
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=3");
-    const serverData = await response.json();
-
-    // Simulate quotes from server
-    const serverQuotes = serverData.map(item => ({
-      text: item.title,
-      category: "Server"
-    }));
+    const serverQuotes = await fetchQuotesFromServer();
 
     // Merge with local, resolve conflicts (server wins)
     quotes = mergeQuotes(serverQuotes, quotes);
@@ -142,7 +146,7 @@ async function syncWithServer() {
   }
 }
 
-// Conflict resolution (server data overrides duplicates)
+// Merge quotes (server data overrides duplicates)
 function mergeQuotes(serverQuotes, localQuotes) {
   const combined = [...localQuotes];
   serverQuotes.forEach(serverQuote => {
